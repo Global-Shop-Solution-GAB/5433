@@ -1,0 +1,145 @@
+Program.Sub.ScreenSU.Start
+Gui.frmImportNest..Create
+Gui.frmImportNest..Caption("Import Nesting")
+Gui.frmImportNest..Size(5130,4605)
+Gui.frmImportNest..MinX(0)
+Gui.frmImportNest..MinY(0)
+Gui.frmImportNest..Position(0,0)
+Gui.frmImportNest..BackColor(-2147483633)
+Gui.frmImportNest..MousePointer(0)
+Gui.frmImportNest..Event(UnLoad,frmImportNest_UnLoad)
+Gui.frmImportNest.trv1.Create(TreeView)
+Gui.frmImportNest.trv1.Size(4815,3030)
+Gui.frmImportNest.trv1.Position(60,405)
+Gui.frmImportNest.lbl1.Create(Label,"Drag & Drop File Here:",True,1935,255,0,60,165,True,0,"Arial",8,-2147483633,0)
+Gui.frmImportNest.cmdDeleteProg.Create(Button)
+Gui.frmImportNest.cmdDeleteProg.Size(4755,375)
+Gui.frmImportNest.cmdDeleteProg.Position(60,3540)
+Gui.frmImportNest.cmdDeleteProg.Caption("Launch Nest Deletion Program")
+Gui.frmImportNest.cmdDeleteProg.Event(Click,cmdDeleteProg_Click)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'15961
+GUI.frmImportNest.trv1.Event("DRAGDROPFILE",DragDrop)
+f.ODBC.Connection!con.openconnection(v.Ambient.PDSN,v.Ambient.PUser,v.Ambient.PPass)
+gui.frmImportNest..Show
+Program.Sub.Main.End
+
+Program.Sub.DragDrop.Start
+gui.frmImportNest..Visible(False)
+
+v.Local.sfiles.Declare(string)
+v.Local.scontent.Declare(string)
+v.Local.i.Declare(long)
+v.Local.j.Declare(long)
+
+v.Local.sNumber.Declare(string)
+v.Local.sstring.Declare(string)
+v.Local.iSeq.Declare(long)
+v.Local.iPos.Declare(long)
+v.Local.sDesc.Declare(string)
+v.Local.sWC.Declare(string)
+v.Local.fSetHrs.Declare(float)
+v.Local.fRunHrs.Declare(float)
+v.Local.sTravNote.Declare(string)
+v.Local.sProcessId.Declare(string)
+v.Local.fDays.Declare(float)
+v.Local.sret.Declare(string)
+v.Local.fSubPrice.Declare(float)
+v.Local.fSubUM.Declare(string)
+v.Local.sSubNotes.Declare(string)
+V.Local.sNewWC.Declare(STRING)
+v.Local.bOutCheck.Declare(boolean)
+v.Local.sOutside.Declare(string)
+v.Local.sSearch.Declare(string)
+v.Local.sval.Declare(string)
+V.Local.sSeqPad.Declare(string)
+v.Local.sSubUM.Declare(string)
+v.Local.bOutCheck.Set(false)
+V.Local.fRate.Declare(float)
+v.Local.sNotes.Declare(string)
+v.Local.ssql.Declare(string)
+v.Local.sRev.Declare(string)
+v.Local.sPart.Declare(string)
+v.Local.sfilename.Declare(string)
+v.Local.sfiledir.Declare(string)
+
+v.Local.fCost.Declare(Float)
+v.Local.fLead.Declare(Float)
+v.Local.sUM.Declare(string)
+'NEED TO ADD IN ROUTER HEADER DESCRIPTION!!!!
+v.Local.sRtrDesc.Declare(string)
+v.Local.sMatOutLab.Declare(string)
+v.Local.sLMO.Declare(string)
+v.Local.sdbarev.Declare(string)
+v.Local.sFilePath.Declare(string)
+v.Local.sretVarheader.Declare(string)
+v.Local.sretVar.Declare(string)
+v.Local.sRouterHD.Declare(string)
+v.Local.sWarning.Declare(string)
+v.Local.sMessage.Declare(string)
+v.Local.sBuild.Declare(string)
+v.Local.lRowCount.Declare(long)
+v.Local.iCount.Declare(long)
+v.Local.iCounter.Declare(long)
+
+f.Intrinsic.Control.Try
+	f.Intrinsic.String.Split(v.Args.Files,"*!*",v.Local.sFiles)
+	f.Intrinsic.Control.For(v.Local.i,0,v.Local.sFiles.UBound,1)
+		f.Automation.MSExcel.CreateAppObject("MSExcel")
+		f.Automation.MSExcel.OpenWorkBook("MSExcel","Test",v.local.sfiles(v.Local.i))
+		f.Automation.MSExcel.OpenWorkSheet("Test","Worksheet1",1)
+		f.Automation.MSExcel.RowCount("Worksheet1",v.Local.lRowCount)
+		f.Automation.MSExcel.ReadCell("Worksheet1",1,1,V.local.sretVarheader)
+		f.Intrinsic.UI.InvokeWaitDialog("Reading spreadsheet","Import Progress")
+		
+		'Check if Program exists in database
+		f.Automation.MSExcel.ReadRow("Worksheet1",2,1,1,V.local.sRetVar)
+		f.Intrinsic.String.Build("SELECT * FROM GAB_5433_NEST WHERE PROGNUM='{0}'",v.Local.sretvar(0),v.Local.ssql)
+		f.ODBC.Connection!con.executeandreturn(v.Local.ssql,v.Local.sret)
+		f.Intrinsic.Control.If(v.Local.sret.Trim,<>,"")
+			f.Intrinsic.UI.Msgbox("Program number found in table, program wil now exit")
+			F.Automation.MSExcel.DestroyAllObjects("MSExcel","Test","Worksheet1")
+			f.Intrinsic.Control.CallSub(frmImportNest_UnLoad)
+		f.Intrinsic.Control.EndIf
+		
+		F.Intrinsic.Control.If(V.Local.sRetVarheader,<>,"")
+			F.Intrinsic.Control.For(V.Local.iCount,2,v.local.lRowCount,1)
+				f.Automation.MSExcel.ReadRow("Worksheet1",V.Local.iCount,1,13,V.local.sRetVar)
+				F.Intrinsic.String.Split(V.Local.sRetVar,"*!*",V.Local.sRetVar)
+				f.Intrinsic.Control.If(v.Local.sretVar(0).trim,<>,"")
+					f.Global.Inventory.GetGSSPart(v.Local.sretVar(1).ucase,"",v.Local.spart)
+					F.Intrinsic.String.Build("INSERT INTO GAB_5433_NEST VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}')",V.Local.sretVar(0),V.Local.sPart,V.Local.sretVar(2),V.Local.sretVar(3),V.Local.sretVar(4),V.Local.sretVar(5),V.Local.sretVar(6),V.Local.sretVar(7),V.Local.sretVar(8),V.Local.sretVar(9),V.Local.sretVar(10),V.Local.sretVar(11),V.Local.ssql)
+					F.ODBC.Connection!con.EXECUTE(V.Local.ssql)
+				f.Intrinsic.Control.EndIf
+			f.Intrinsic.Control.Next(v.Local.iCount)
+		f.Intrinsic.Control.EndIf
+		F.Automation.MSExcel.DestroyAllObjects("MSExcel","Test","Worksheet1")
+	F.Intrinsic.Control.Next(V.Local.i)
+	f.Intrinsic.UI.CloseWaitDialog
+	f.Intrinsic.Control.CallSub(frmImportNest_UnLoad)
+f.Intrinsic.Control.Catch
+	f.Intrinsic.UI.Msgbox(v.Ambient.ErrorDescription)
+	f.Automation.MSExcel.DestroyAllObjects("MSExcel","Test","Worksheet1")
+	f.ODBC.Connection!con.Close
+	f.Intrinsic.Control.End
+f.Intrinsic.Control.EndTry
+Program.Sub.DragDrop.End
+
+Program.Sub.frmImportNest_UnLoad.Start
+f.ODBC.Connection!con.Close
+f.Intrinsic.Control.End
+Program.Sub.frmImportNest_UnLoad.End
+
+Program.Sub.cmdDeleteProg_Click.Start
+v.Local.lret.Declare
+v.Local.sret.Declare
+f.Intrinsic.String.Concat(v.Caller.GasDir,"\GAB_5433_DELETE.g2u",v.Local.sret)
+f.Global.General.CallAsyncGAS(v.Local.sret,v.Local.lret)
+Program.Sub.cmdDeleteProg_Click.End
+
+
