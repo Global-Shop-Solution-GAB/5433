@@ -1,0 +1,188 @@
+Program.Sub.ScreenSU.Start
+Gui.frmIssue..Create
+Gui.frmIssue..Caption("Issue Material")
+Gui.frmIssue..Size(15360,2700)
+Gui.frmIssue..MinX(0)
+Gui.frmIssue..MinY(0)
+Gui.frmIssue..Position(0,0)
+Gui.frmIssue..BackColor(-2147483633)
+Gui.frmIssue..MousePointer(0)
+Gui.frmIssue..Event(UnLoad,frmIssue_UnLoad)
+Gui.frmIssue.txtSerial.Create(TextBox,"",True,2985,300,0,9300,960,False,0,"Arial",8,-2147483643,1)
+Gui.frmIssue.lbl1.Create(Label,"Serial Number",True,2715,255,0,9285,705,True,0,"Arial",8,-2147483633,0)
+Gui.frmIssue.lbl2.Create(Label,"Schedule Number",True,1935,255,0,240,75,True,0,"Arial",8,-2147483633,0)
+Gui.frmIssue.txtProgram.Create(TextBox,"",True,2955,300,0,240,270,False,0,"Arial",8,-2147483643,1)
+Gui.frmIssue.cmdBrowseProg.Create(Button)
+Gui.frmIssue.cmdBrowseProg.Size(585,375)
+Gui.frmIssue.cmdBrowseProg.Position(3405,225)
+Gui.frmIssue.cmdBrowseProg.Caption("^")
+Gui.frmIssue.cmdBrowseProg.Event(Click,cmdBrowseProg_Click)
+Gui.frmIssue.cmdBrowseMat.Create(Button)
+Gui.frmIssue.cmdBrowseMat.Size(600,375)
+Gui.frmIssue.cmdBrowseMat.Position(3405,915)
+Gui.frmIssue.cmdBrowseMat.Caption("^")
+Gui.frmIssue.cmdBrowseMat.Event(Click,cmdBrowseMat_Click)
+Gui.frmIssue.cmdProcess.Create(Button)
+Gui.frmIssue.cmdProcess.Size(1785,450)
+Gui.frmIssue.cmdProcess.Position(195,1485)
+Gui.frmIssue.cmdProcess.Caption("Process")
+Gui.frmIssue.cmdProcess.Event(Click,cmdProcess_Click)
+Gui.frmIssue.txtPart.Create(TextBox,"",True,1710,300,0,4320,960,False,0,"Arial",8,-2147483643,1)
+Gui.frmIssue.txtLot.Create(TextBox,"",True,1590,300,0,6150,960,False,0,"Arial",8,-2147483643,1)
+Gui.frmIssue.txtBin.Create(TextBox,"",True,1215,300,0,7905,960,False,0,"Arial",8,-2147483643,1)
+Gui.frmIssue.txtHeat.Create(TextBox,"",True,3060,300,0,225,1005,False,0,"Arial",8,-2147483643,1)
+Gui.frmIssue.lbl3.Create(Label,"Part",True,1515,255,0,4275,705,True,0,"Arial",8,-2147483633,0)
+Gui.frmIssue.lbl4.Create(Label,"Lot",True,1515,255,0,6150,705,True,0,"Arial",8,-2147483633,0)
+Gui.frmIssue.lbl5.Create(Label,"Bin",True,930,255,0,7920,705,True,0,"Arial",8,-2147483633,0)
+Gui.frmIssue.lbl6.Create(Label,"Heat",True,930,255,0,240,705,True,0,"Arial",8,-2147483633,0)
+Gui.frmIssue.txtQty.Create(TextBox,"",True,1830,300,0,12585,960,False,0,"Arial",8,-2147483643,1)
+Gui.frmIssue.lbl7.Create(Label,"QTY",True,2715,255,0,12570,705,True,0,"Arial",8,-2147483633,0)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+Program.External.Include.Library("450100.lib")
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'15962
+f.ODBC.Connection!con.openconnection(v.Ambient.PDSN,v.Ambient.PUser,v.Ambient.PPass)
+gui.frmIssue..Show
+Program.Sub.Main.End
+
+Program.Sub.cmdBrowseProg_Click.Start
+F.Intrinsic.UI.SetBrowserHotTypeAhead(True)
+V.local.ssql.declare(String)
+V.Local.sRet.Declare(String)
+V.Local.sTitles.Declare(String)
+V.Local.iWidths.Declare(String)
+V.Local.stemp.Declare(String)
+v.Local.dDateMax.Declare(Date)
+v.Local.i.Declare(long)
+V.Local.SVALS.Declare(STRING)
+V.Local.SVALROWS.Declare(STRING)
+v.Local.j.Declare(long)
+V.Local.SMESSAGE.Declare(STRING)
+v.Local.sSearch.Declare(string)
+v.Local.sFlex.Declare(string)
+v.Local.sProg.Declare(string)
+
+F.intrinsic.string.split("ProgNum*!*WorkOrder","*!*",Variable.local.sTitles)
+F.intrinsic.string.split("2000*!*3000","*!*",Variable.local.iWidths)
+
+V.Local.ssql.set("select Distinct ProgNum,WorkOrder from GAB_5433_NEST WHERE PROCESSED<>'Y'")
+
+F.intrinsic.ui.browser("Select a Program",con,v.Local.ssql,v.local.sTitles,v.local.iWidths,v.local.sRet)
+
+F.intrinsic.control.if(Variable.local.sRet,"=","***CANCEL***")
+F.intrinsic.control.else
+	F.Intrinsic.String.Split(V.Local.sRet,"*!*",v.Local.sret)
+	v.Local.sProg.Set(v.Local.sRet(0))
+	gui.frmIssue.txtProgram.Text(v.Local.sProg)
+	
+	'Get the Parts
+	v.Local.ssql.Set("SELECT * FROM GAB_5433_NEST WHERE ProgNum='{0}'")
+	f.Intrinsic.String.Build(v.Local.ssql,v.Local.sProg,v.Local.ssql)
+	f.Intrinsic.Control.If(v.DataTable.dtParts.Exists,=,true)
+		f.Data.DataTable.Close("dtParts")
+	f.Intrinsic.Control.EndIf
+	f.Data.DataTable.CreateFromSQL("dtParts","con",v.Local.ssql,true)
+F.Intrinsic.Control.EndIf
+Program.Sub.cmdBrowseProg_Click.End
+
+Program.Sub.cmdBrowseMat_Click.Start
+F.Intrinsic.UI.SetBrowserHotTypeAhead(True)
+V.local.ssql.declare(String)
+V.Local.sRet.Declare(String)
+V.Local.sTitles.Declare(String)
+V.Local.iWidths.Declare(String)
+V.Local.stemp.Declare(String)
+v.Local.dDateMax.Declare(Date)
+v.Local.i.Declare(long)
+V.Local.SVALS.Declare(STRING)
+V.Local.SVALROWS.Declare(STRING)
+v.Local.j.Declare(long)
+V.Local.SMESSAGE.Declare(STRING)
+v.Local.sSearch.Declare(string)
+v.Local.sSerial.Declare(string)
+v.Local.ssqlCheck.Declare(string)
+v.Local.smaterial.Declare(string)
+v.Local.sGSSMater.Declare(string)
+v.Local.serrmsg.Declare(string)
+
+'Create the browser header
+F.intrinsic.string.split("LONG PART*!*PART*!*LOT*!*BIN*!*HEAT*!*SERIAL_NUMBER*!*QUANTITY","*!*",Variable.local.sTitles)
+F.intrinsic.string.split("4000*!*2000*!*2000*!*2000*!*2000*!*3000*!*2000","*!*",Variable.local.iWidths)
+
+'Not found, so grab a GSS Material
+'Grab GSS Material
+v.Local.ssqlCheck.Set("SELECT DISTINCT Material FROM GAB_5433_NEST WHERE ProgNum='{0}' and Processed<>'Y'")
+f.Intrinsic.String.Build(v.Local.ssqlCheck,V.Screen.frmIssue!txtProgram.text,v.Local.ssql)
+f.ODBC.Connection!con.executeandreturn(v.Local.ssql,v.Local.sGSSMater)
+
+'Show only those materials
+V.Local.ssql.set("SELECT rtrim(IF(INV_LXR.DISPLAY_PART is null, SUBSTRING(V_ITEM_MASTER.PART, 1, 17), INV_LXR.DISPLAY_PART)) AS 'LongPartNumber', PART, LOT, BIN, HEAT, SERIAL_NUMBER, QUANTITY FROM V_ITEM_MASTER left  join INV_LXR ON V_ITEM_MASTER.PART= INV_LXR.GSS_PART  WHERE PART='{0}'")
+f.Intrinsic.String.Build(v.Local.ssql,v.Local.sGSSMater,v.Local.ssql)
+F.intrinsic.ui.browser("Select a mATERIAL",con,v.Local.ssql,v.local.sTitles,v.local.iWidths,v.local.sRet)
+	
+F.intrinsic.control.if(v.local.sRet,"=","***CANCEL***")
+F.intrinsic.control.else
+	F.Intrinsic.String.Split(V.Local.sRet,"*!*",v.Local.sret)
+	gui.frmIssue.txtPart.Text(v.Local.sRet(1))
+	gui.frmIssue.txtLot.Text(v.Local.sRet(2))
+	gui.frmIssue.txtBin.Text(v.Local.sRet(3))
+	gui.frmIssue.txtHeat.Text(v.Local.sRet(4))
+	gui.frmIssue.txtSerial.Text(v.Local.sRet(5))
+	gui.frmIssue.txtQty.Text(V.Local.sRet(6))
+F.Intrinsic.Control.EndIf
+Program.Sub.cmdBrowseMat_Click.End
+
+Program.Sub.frmIssue_UnLoad.Start
+F.ODBC.Connection!con.Close
+f.Intrinsic.Control.End
+Program.Sub.frmIssue_UnLoad.End
+
+Program.Sub.cmdProcess_Click.Start
+v.Local.i.Declare
+v.Local.sPJB.Declare
+v.Local.sPSF.Declare
+v.Local.sprt.Declare
+v.Local.sBin.Declare
+v.Local.sLot.Declare
+v.Local.sSer.Declare
+v.Local.sHea.Declare
+v.Local.sSeq.Declare
+v.Local.sSql.Declare
+V.Local.sRet.Declare
+v.Local.fQty.Declare
+
+v.Local.sprt.Set(v.Screen.frmIssue!txtPart.text)
+v.Local.sBin.Set(v.Screen.frmIssue!txtBin.text)
+v.Local.sLot.Set(v.Screen.frmIssue!txtLot.text)
+v.Local.sHea.Set(v.Screen.frmIssue!txtHeat.text)
+v.Local.sSer.Set(v.Screen.frmIssue!txtSerial.text)
+
+f.Intrinsic.Control.For(v.Local.i,0,v.DataTable.dtParts.RowCount--,1)
+	'Set the variables
+	f.Intrinsic.String.Split(v.DataTable.dtParts(v.Local.i).WorkOrder!fieldvaltrim,"-",v.Local.sRet)
+	v.Local.sPJB.Set(v.Local.sRet(0))
+	v.Local.sPSF.Set(v.Local.sret(1))
+	v.Local.fQty.Set(v.DataTable.dtParts(v.Local.i).MATERIALUSAGE!FIELDVALTRIM)
+	
+	'Grab the sequence for the parent's FG part line
+	f.Intrinsic.String.Build("SELECT SEQ FROM V_JOB_OPERATIONS WHERE JOB='{0}' AND SUFFIX='{1}' AND PART='{2}'",v.Local.sPJB,v.Local.sPSF,v.Local.sprt,v.Local.ssql)
+	f.ODBC.Connection!CON.executeandreturn(v.Local.ssql,v.Local.sSeq)
+	
+	'Add row to the library
+	f.Data.DataTable.AddRow("450100","Part",v.Local.sprt,"Lot",v.Local.sLot,"Bin",v.Local.sBin,"Heat",v.Local.shea,"Serial",v.Local.sSer,"Quantity",v.Local.fQty,"WONumber",V.Local.sPJB,"WOSuffix",v.Local.sPSF,"WOSeq",v.Local.sSeq)
+f.Intrinsic.Control.Next(v.Local.i)
+F.Intrinsic.String.Build("update GAB_5433_NEST SET Processed='Y' WHERE ProgNum='{0}'",v.Screen.frmIssue!txtProgram.text,v.Local.sSql)
+f.ODBC.Connection!con.execute(v.Local.ssql)
+f.Intrinsic.Control.CallSub(450100Sync)
+gui.frmIssue.txtPart.Text("")
+gui.frmIssue.txtBin.Text("")
+gui.frmIssue.txtHeat.Text("")
+gui.frmIssue.txtLot.Text("")
+gui.frmIssue.txtQty.Text("")
+gui.frmIssue.txtSerial.Text("")
+gui.frmIssue.txtProgram.Text("")
+Program.Sub.cmdProcess_Click.End
