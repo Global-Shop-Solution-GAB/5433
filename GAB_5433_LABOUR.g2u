@@ -1,0 +1,203 @@
+Program.Sub.ScreenSU.Start
+Gui.frmNestTime..Create
+Gui.frmNestTime..Caption("Apply Nest Time")
+Gui.frmNestTime..Size(8340,5280)
+Gui.frmNestTime..MinX(0)
+Gui.frmNestTime..MinY(0)
+Gui.frmNestTime..Position(0,0)
+Gui.frmNestTime..BackColor(-2147483633)
+Gui.frmNestTime..MousePointer(0)
+Gui.frmNestTime..Event(UnLoad,frmNestTime_UnLoad)
+Gui.frmNestTime.lbl1.Create(Label,"Program #:",True,1935,255,0,135,90,True,0,"Arial",8,-2147483633,0)
+Gui.frmNestTime.txtSchedule.Create(TextBox,"",True,1575,300,0,135,285,True,0,"Arial",8,-2147483643,1)
+Gui.frmNestTime.txtSchedule.Event(LostFocus,txtSchedule_LostFocus)
+Gui.frmNestTime.gsgcParts.Create(GsGridControl)
+Gui.frmNestTime.gsgcParts.Size(7860,3525)
+Gui.frmNestTime.gsgcParts.Position(135,630)
+Gui.frmNestTime.cmdProcess.Create(Button)
+Gui.frmNestTime.cmdProcess.Size(855,375)
+Gui.frmNestTime.cmdProcess.Position(135,4185)
+Gui.frmNestTime.cmdProcess.Caption("Process")
+Gui.frmNestTime.cmdProcess.Event(Click,cmdProcess_Click)
+Gui.frmNestTime.lblProgram.Create(Label,"",False,1935,255,0,1995,345,True,0,"Arial",8,-2147483633,0)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+'1 Date
+'2 Emp
+'3 Job
+'4 Suffix
+'5 Seq
+'6 Workcenter
+'7 Hours
+'8 CLosed
+'9 Indirect
+'10 Start Time
+'1 Finish Time
+' 12Rate Ty
+'13GoodPie
+'14 scarp
+'15 scrap code.
+'have to multiply our qty by 10000
+Program.Sub.Preflight.End
+
+
+Program.Sub.Main.Start
+'15963
+f.ODBC.Connection!con.openconnection(v.Ambient.PDSN,v.Ambient.PUser,v.Ambient.PPass)
+gui.frmNestTime.gsgcParts.anchor(15)
+gui.frmNestTime.cmdProcess.anchor(6)
+gui.frmNestTime..Show
+Program.Sub.Main.End
+
+Program.Sub.loadDt.Start
+v.Local.ssql.Declare
+v.Local.sProg.Declare
+v.Local.sProg.Set(v.Screen.frmNestTime!txtSchedule.text)
+f.Intrinsic.Control.If(v.DataTable.dt.Exists)
+	f.Data.DataTable.Close("dt")
+f.Intrinsic.Control.EndIf
+f.Intrinsic.String.Build("SELECT * FROM GAB_5433_NEST WHERE ProgNum='{0}'",v.Local.sProg,v.Local.ssql)
+f.Data.DataTable.CreateFromSQL("dt","con",v.Local.ssql,true)
+f.Data.DataTable.AddColumn("dt","Scrap","Float")
+gui.frmNestTime.gsgcParts.DataSource("dt")
+gui.frmNestTime.gsgcParts.AddGridviewFromDatatable("gv","dt")
+gui.frmNestTime.gsgcParts.SetColumnProperty("gv","ProgNum","Visible","False")
+gui.frmNestTime.gsgcParts.SetColumnProperty("gv","Material","Visible","False")
+gui.frmNestTime.gsgcParts.SetColumnProperty("gv","Length","Visible","False")
+gui.frmNestTime.gsgcParts.SetColumnProperty("gv","Width","Visible","False")
+gui.frmNestTime.gsgcParts.SetColumnProperty("gv","XDim","Visible","False")
+gui.frmNestTime.gsgcParts.SetColumnProperty("gv","YDim","Visible","False")
+gui.frmNestTime.gsgcParts.SetColumnProperty("gv","PartWeight","Visible","False")
+gui.frmNestTime.gsgcParts.SetColumnProperty("gv","MaterialUsage","Visible","False")
+gui.frmNestTime.gsgcParts.SetColumnProperty("gv","Workcentre","Visible","False")
+gui.frmNestTime.gsgcParts.SetColumnProperty("gv","ProcessTime","Visible","False")
+gui.frmNestTime.gsgcParts.SetColumnProperty("gv","Scrap","ReadOnly","False")
+gui.frmNestTime.gsgcParts.SetColumnProperty("gv","Scrap","AllowEdit","True")
+gui.frmNestTime.gsgcParts.SetColumnProperty("gv","WorkOrder","ReadOnly","True")
+gui.frmNestTime.gsgcParts.SetColumnProperty("gv","QTYNested","ReadOnly","True")
+Program.Sub.loadDt.End
+
+Program.Sub.cmdProcess_Click.Start
+gui.frmNestTime..Enabled(False)
+v.Local.ssql.Declare
+v.Local.sProg.Declare
+v.Local.sEmpl.Declare
+v.Local.sJobH.Declare
+v.Local.sSuff.Declare
+v.Local.sSequ.Declare
+v.Local.sWrkC.Declare
+v.Local.sWrkG.Declare
+v.Local.sHour.Declare
+v.Local.sClsd.Declare
+v.Local.sIDir.Declare
+v.Local.sStrt.Declare
+v.Local.sFinh.Declare
+v.Local.sType.Declare
+v.Local.sCode.Declare
+v.Local.sSplt.Declare
+v.Local.sDate.Declare
+v.Local.sGood.Declare
+v.Local.sScrp.Declare
+v.Local.sFile.Declare
+v.Local.sLine.Declare
+v.Local.sAll.Declare
+v.Local.sGAB.Declare
+
+v.Local.dDate.Declare
+
+v.Local.fGood.Declare
+v.Local.fHour.Declare
+v.Local.fScrp.Declare
+v.Local.fTime.Declare
+v.Local.fCalc.Declare
+v.Local.fTtlP.Declare
+v.Local.fMins.Declare
+v.Local.lMin.Declare
+
+v.Local.i.Declare
+v.Local.fScrp.Set(0)
+v.Local.sCode.Set("01")
+v.Local.sIDir.Set("D")
+v.Local.sType.Set("L")
+v.Local.sStrt.set("0001 ")
+v.Local.sFinh.Set("0930 ")
+V.Local.sEmpl.Set("99999")
+v.Local.dDate.Set(v.Ambient.Date)
+f.Intrinsic.String.Format(v.Local.dDate,"MMDDYY",v.Local.sDate)
+
+f.Intrinsic.Control.For(v.Local.i,0,v.DataTable.dt.RowCount--,1)
+	'Set the job
+	f.Intrinsic.String.Split(v.DataTable.dt(v.Local.i).WORKORDER!FIELDVALTRIM,"-",v.Local.sSplt)
+	v.Local.sJobH.Set(v.Local.sSplt(0))
+	v.Local.sSuff.Set(v.Local.sSplt(1))
+	
+	'Set the piece count and time
+	v.Local.fGood.Set(v.DataTable.dt(v.Local.i).QTYNESTED!FIELDVALFLOAT)
+	v.Local.fScrp.Set(v.DataTable.dt(v.Local.i).SCRAP!FIELDVALFLOAT)
+	F.Intrinsic.Math.Sub(v.Local.fGood,v.Local.fScrp,v.Local.fGood)
+	v.Local.fTime.Set(v.DataTable.dt(v.Local.i).Processtime!FIELDVALFLOAT)
+	F.Intrinsic.String.Format(V.Local.fGood,"000000000.000",V.Local.sGood)
+	F.Intrinsic.String.Format(V.Local.fScrp,"000000000.000",V.Local.sScrp)
+	
+	'Get the Sequence/workcentre
+	v.Local.sWrkC.Set(v.DataTable.dt(v.Local.i).WORKCENTRE!FIELDVALTRIM)
+	f.Intrinsic.String.Left(v.Local.sWrkC,3,v.Local.sWrkG)
+	f.Intrinsic.String.build("SELECT SEQ FROM JOB_OPERATIONS WHERE JOB='{0}' AND SUFFIX='{1}' AND PART='{2}'",v.Local.sJobH.Trim,v.Local.sSuff.Trim,v.Local.sWrkG.Trim,v.Local.ssql)
+	f.ODBC.Connection!con.executeandreturn(v.Local.ssql,v.Local.sSequ)
+	
+	'Get the total piece count for a work order
+	f.Intrinsic.String.Build("SELECT UNITS_OPEN FROM JOB_OPERATIONS WHERE JOB='{0}' AND SUFFIX='{2}' AND SEQ='{3}'",V.Local.sJobH,v.Local.sSuff,v.Local.sSequ,v.Local.ssql)
+	f.ODBC.Connection!con.executeandreturn(v.Local.ssql,v.local.fTtlP)
+	
+	'Determine if closed
+	f.Intrinsic.Control.If(v.Local.fGood,>=,v.Local.fTtlP)
+		v.Local.sClsd.Set("Y")
+	f.Intrinsic.Control.Else
+		v.Local.sClsd.Set("")
+	f.Intrinsic.Control.EndIf
+	
+	'Calculate the hours
+	f.Intrinsic.Control.If(v.Local.fGood,=,0,"or",v.Local.fTime,=,"0")
+	f.Intrinsic.Control.Else
+		f.Intrinsic.String.Split(v.Local.fTime,".",v.Local.sSplt)
+		v.Local.fHour.Set(v.Local.sSplt(0))
+		f.Intrinsic.Control.If(v.Local.sSplt.UBound,>,0)
+			f.Intrinsic.String.Concat(".",v.Local.sSplt(1),v.Local.fMins)
+			f.Intrinsic.Math.Mult(v.Local.fMins,60,v.Local.fMins)
+			f.Intrinsic.Math.Add(v.Local.fMins,1,v.Local.fMins)
+			f.Intrinsic.Math.ConvertToLong(v.Local.fMins,v.Local.lMin)
+		f.Intrinsic.Control.EndIf
+		f.Intrinsic.String.Concat(v.Local.fHour,v.Local.lMin,v.Local.sFinh)
+		f.Intrinsic.String.LPad(v.Local.sFinh,"0",4,v.Local.sFinh)
+		'v.Local.fHour.Set(v.Local.fCalc)
+		F.Intrinsic.String.Format(V.Local.fHour,"00.0000",V.Local.sHour)
+	f.Intrinsic.Control.EndIf
+	
+	'Format the lin
+	v.Local.sLine.Set("{1}{0}{2}{0}{3}{0}{4}{0}{5}{0}{6}{0}{7}{0}{8}{0}{9}{0}{10}{0}{11}{0}{12}{0}{13}{0}{14}{0}{15}{16}")
+	f.Intrinsic.String.build(v.Local.sLine,v.Ambient.Tab,v.Local.sDate,v.Local.sEmpl,v.Local.sJobH,v.Local.sSuff,v.Local.sSequ,v.Local.sWrkC,v.Local.sHour,v.Local.sClsd,v.Local.sIDir,v.Local.sStrt,v.Local.sFinh,v.Local.sType,v.Local.sGood,v.Local.sScrp,v.Local.sCode,v.Ambient.NewLine,v.Local.sLine)
+	F.Intrinsic.String.Concat(V.Local.sAll,v.Local.sLine,v.Local.sAll)			
+f.Intrinsic.Control.Next(v.Local.i)
+F.Intrinsic.String.Concat(v.caller.FilesDir,"\",V.Caller.CompanyCode,V.Caller.Terminal,"MOPEN.txt",V.Local.sFile)
+F.Intrinsic.File.String2File(V.Local.sFile,V.Local.sAll)
+f.Intrinsic.String.Concat(v.Caller.GASDir,"\","GAB_4975_CALL.gas",v.Local.sGAB)
+F.Global.General.CallSyncGAS(v.Local.sGAB)
+gui.frmNestTime.txtSchedule.Text("")
+gui.frmNestTime.lblProgram.Caption("")
+f.Data.DataTable.DeleteRow("dt")
+gui.frmNestTime..Enabled(true)
+Program.Sub.cmdProcess_Click.End
+
+Program.Sub.frmNestTime_UnLoad.Start
+f.ODBC.Connection!con.Close
+f.Intrinsic.Control.End
+Program.Sub.frmNestTime_UnLoad.End
+
+Program.Sub.txtSchedule_LostFocus.Start
+f.Intrinsic.Control.If(v.screen.frmNestTime!txtSchedule.text,=,v.Screen.frmNestTime!lblProgram.Caption)
+f.Intrinsic.Control.Else
+	gui.frmNestTime.lblProgram.Caption(v.Screen.frmNestTime!txtSchedule.text)
+	f.Intrinsic.Control.CallSub(loadDt)
+f.Intrinsic.Control.EndIf
+Program.Sub.txtSchedule_LostFocus.End
